@@ -58,35 +58,19 @@ def insert_song(song_name: str, value: int = 0):
     print(f"Predecessor Key: {predecessor}")
     print(f"Successor Key: {utils.hash_function(f'{node.get_successor()[0]}:{node.get_successor()[1]}')}")
     
-    
     # Check if the key falls in the interval (predecessor, current_id]
     if belongs_to_me(key,  current_id, predecessor,):
         print("Responsible : Inserting locally.")
         node.insert(song_name, value)
-        
-        number_of_nodes = 0
-        try:
-                request = requests.get(f"http://{os.getenv('BOOTSTRAP_IP')}:{os.getenv('BOOTSTRAP_PORT')}/get_nodes")
-                number_of_nodes = request.json().get("number_of_nodes", 1)
-        except requests.RequestException as e:
-                return jsonify({"error": f"Failed to get number of nodes from bootstrap node: {str(e)}"}), 500
-         
-        to_send = k 
-        # Handling Under Replication
-        if number_of_nodes <=k:
-            print('We have under replication\n')
-            to_send = number_of_nodes
-            
         # Check for the consistency model 
         if consistency == 'chain replication':
             print(f"Consistency Model: {consistency} and we start from the primary node of the key {node.get_ip()}:{node.get_port()}")
             # The Last Node in the chain has to return the response to the client
             if node.get_successor() == []:
                 return jsonify({"message": f"Inserted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
-            
             else:
                 try: 
-                    packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": to_send-1} 
+                    packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": k-1} 
                     response = requests.post(f"http://{node.get_successor()[0]}:{node.get_successor()[1]}/chain_replicated_insert",json=packet)
                     response.raise_for_status()
                     return response.json(), response.status_code
@@ -99,7 +83,7 @@ def insert_song(song_name: str, value: int = 0):
             if node.get_successor() == []:
                 return jsonify({"message": f"Inserted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
             else:
-                packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": to_send-1} # prepare the packet that is the argument of the thread
+                packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": k-1} # prepare the packet that is the argument of the thread
                 thread = threading.Thread(target=eventual_insertion_background, args=(packet,)) # our argument is the function that we want to run in the thread, so from the function we hit the endpoint
                 thread.start() # start the thread to replicate the song to the next k-1 nodes
                 return jsonify({"message": f"Inserted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
@@ -109,7 +93,7 @@ def insert_song(song_name: str, value: int = 0):
              print("Responsible : Inserting locally. No consistency model")
              return jsonify({"message": f"Inserted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
         
-    else: # Does not belong to us (we are not responsible, meaning we are not the primary node for this song)
+    else:
         print("Not responsible : Forwarding to successor.")
         # Forward the request to the successor.
         successor = node.get_successor()
@@ -128,7 +112,7 @@ def insert_song(song_name: str, value: int = 0):
 
 
 def eventual_insertion_background(packet):
-    time.sleep(0.01)  # 10 millisecond delay for testing purposes only (last experiment)
+    time.sleep(0.01)  # 10 millisecond delay
     successor = node.get_successor()
     if not successor or successor == []:
         print("No valid successor found, replication stops here.")
@@ -156,6 +140,12 @@ def eventual_insertion():
     counter = data["k"]
     
     print(f"Received chain replication packet for '{song_name}' with k = {counter} at node {node.get_ip()}:{node.get_port()}")
+    
+    
+    # K = 1
+    if counter ==0:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}), 200
     
     if counter == 1: # Last node and we return the response 
         print(f"Last Node that the song replication happens {node.get_ip()}:{node.get_port()}")
@@ -186,6 +176,7 @@ def eventual_insertion():
         
     
     
+
 @app.route('/chain_replicated_insert', methods=['POST'])
 def chain_replicated_insert():
     data = request.get_json()
@@ -196,10 +187,14 @@ def chain_replicated_insert():
     value = data["value"]
     counter = data["k"]
     
-    time.sleep(0.01)  # for testing purposes only (last experiment) 
+    time.sleep(0.01)  # 10 millisecond delay at each hop
 
     
     print(f"Received chain replication packet for '{song_name}' with k = {counter} at node {node.get_ip()}:{node.get_port()}")
+    
+    if counter == 0:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}), 200
     
     if counter == 1: # Last node in the chain and we return the response to the client
         print(f"Last Node that the song replication happens {node.get_ip()}:{node.get_port()}")
@@ -228,7 +223,6 @@ def chain_replicated_insert():
         except requests.RequestException as e:
             return jsonify({"error": f"Failed to forward chain replication packet to node {successor}: {str(e)}"}), 500
     
-
 
 @app.route('/query/<string:song_name>', methods=['GET'])
 def query_song(song_name: str):
@@ -423,6 +417,7 @@ def chain_replicated_query():
             return jsonify({"error": f"Failed to forward chain replicated query to node {successor}: {str(e)}"}), 500
 
 
+
 @app.route('/delete/<string:song_name>', methods=['DELETE'])
 def delete(song_name: str):
     key = utils.hash_function(song_name)
@@ -538,6 +533,10 @@ def eventual_deletion():
     song_name = data["song_name"]
     counter = data["k"]
     
+    if k == 1:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}), 200
+    
     if counter == 1:
         print(f"Last Node that the song deletion happens {node.get_ip()}:{node.get_port()}")
         result = node.delete(song_name)
@@ -580,6 +579,12 @@ def chain_replicated_delete():
     counter = data["k"]
     
     print(f"Received chain replication packet for '{song_name}' with k = {counter} at node {node.get_ip()}:{node.get_port()}")
+    
+    
+    if counter == 0:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}),200
+    
     
     if counter == 1:
         print(f"Last Node that the song deletion happens {node.get_ip()}:{node.get_port()}")

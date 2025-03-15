@@ -145,6 +145,12 @@ def eventual_insertion():
     
     print(f"Received chain replication packet for '{song_name}' with k = {counter} at node {node.get_ip()}:{node.get_port()}")
     
+    
+    # K = 1
+    if counter ==0:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}), 200
+    
     if counter == 1: # Last node and we return the response 
         print(f"Last Node that the song replication happens {node.get_ip()}:{node.get_port()}")
         node.set_song_to_song_list(song_name, value)
@@ -189,6 +195,10 @@ def chain_replicated_insert():
 
     
     print(f"Received chain replication packet for '{song_name}' with k = {counter} at node {node.get_ip()}:{node.get_port()}")
+    
+    if counter == 0:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}), 200
     
     if counter == 1: # Last node in the chain and we return the response to the client
         print(f"Last Node that the song replication happens {node.get_ip()}:{node.get_port()}")
@@ -527,6 +537,10 @@ def eventual_deletion():
     song_name = data["song_name"]
     counter = data["k"]
     
+    if k == 1:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}), 200
+    
     if counter == 1:
         print(f"Last Node that the song deletion happens {node.get_ip()}:{node.get_port()}")
         result = node.delete(song_name)
@@ -569,6 +583,12 @@ def chain_replicated_delete():
     counter = data["k"]
     
     print(f"Received chain replication packet for '{song_name}' with k = {counter} at node {node.get_ip()}:{node.get_port()}")
+    
+    
+    if counter == 0:
+        print(f"K=1 and  {node.get_ip()}:{node.get_port()}")
+        return jsonify({"message": "Did not do anything..."}),200
+    
     
     if counter == 1:
         print(f"Last Node that the song deletion happens {node.get_ip()}:{node.get_port()}")

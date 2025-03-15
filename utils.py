@@ -3,9 +3,9 @@ import socket
 
 nodes = {}
 
-k = 2 # replication factor, default value is 1
+k = 1 # replication factor, default value is 1
 
-consistency = "chain replication" # default value is 'chain replication' -> linearizability, 2 choices "eventual consistency" and "chain replication"
+consistency = "eventual consistency" # default value is 'chain replication' -> linearizability, 2 choices "eventual consistency" and "chain replication"
 
 
 def hash_function(key: str):
