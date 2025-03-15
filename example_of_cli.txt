@@ -1,0 +1,49 @@
+$ python3 cli.py
+Welcome to the DHT CLI. Type 'help' to get started.
+DHT> help
+Available commands:
+  insert <key> <value>  - Insert a new (key,value) pair into the DHT.
+  delete <key>          - Delete the (key,value) pair with the given key.
+  query <key>           - Query the DHT for a key. Use '*' to return all pairs.
+  depart                - Gracefully depart from the DHT.
+  overlay               - Display the network overlay (Chord ring topology).
+  help                  - Show this help message.
+  exit                  - Exit the CLI.
+  
+DHT> setnode 3
+Target node set to: http://10.0.17.158:5002
+
+DHT> listnodes
+Available nodes:
+  1: http://10.0.17.96:5000
+  2: http://10.0.17.245:5001
+  3: http://10.0.17.158:5002
+  4: http://10.0.17.171:5003
+  5: http://10.0.17.209:5004
+  6: http://10.0.17.96:5005
+  7: http://10.0.17.245:5006
+  8: http://10.0.17.158:5007
+  9: http://10.0.17.171:5008
+  10: http://10.0.17.209:5009
+
+DHT> insert "Like a Rolling Stone" "http://download.nodeX"
+{"message": "Inserted 'Like a Rolling Stone' at node 10.0.17.158:5002"}
+  
+DHT> query "Like a Rolling Stone"
+{"message": "Song found at node 10.0.17.158:5002", "value": "http://download.nodeX"}
+  
+DHT> delete "Like a Rolling Stone"
+{"message": "Deleted 'Like a Rolling Stone' from node 10.0.17.158:5002"}
+  
+DHT> query "Like a Rolling Stone"
+{"message": "Song 'Like a Rolling Stone' not found in DHT"}
+  
+DHT> overlay
+{"overlay": ["10.0.17.96:5000", "10.0.17.245:5001", "10.0.17.158:5002", "10.0.17.171:5003", "10.0.17.209:5004", "..."]}
+  
+DHT> depart
+{"message": "Node 10.0.17.158:5002 is gracefully departing the DHT"}
+  
+DHT> exit
+Exiting CLI.
+

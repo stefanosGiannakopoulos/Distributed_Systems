@@ -1,0 +1,8 @@
+venv/
+.gitiignore
+team_10/
+.env
+insert/
+queries/
+requests/
+__pycache__/
