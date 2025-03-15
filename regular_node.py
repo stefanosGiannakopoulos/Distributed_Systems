@@ -58,19 +58,35 @@ def insert_song(song_name: str, value: int = 0):
     print(f"Predecessor Key: {predecessor}")
     print(f"Successor Key: {utils.hash_function(f'{node.get_successor()[0]}:{node.get_successor()[1]}')}")
     
+    
     # Check if the key falls in the interval (predecessor, current_id]
     if belongs_to_me(key,  current_id, predecessor,):
         print("Responsible : Inserting locally.")
         node.insert(song_name, value)
+        
+        number_of_nodes = 0
+        try:
+                request = requests.get(f"http://{os.getenv('BOOTSTRAP_IP')}:{os.getenv('BOOTSTRAP_PORT')}/get_nodes")
+                number_of_nodes = request.json().get("number_of_nodes", 1)
+        except requests.RequestException as e:
+                return jsonify({"error": f"Failed to get number of nodes from bootstrap node: {str(e)}"}), 500
+         
+        to_send = k 
+        # Handling Under Replication
+        if number_of_nodes <=k:
+            print('We have under replication\n')
+            to_send = number_of_nodes
+            
         # Check for the consistency model 
         if consistency == 'chain replication':
             print(f"Consistency Model: {consistency} and we start from the primary node of the key {node.get_ip()}:{node.get_port()}")
             # The Last Node in the chain has to return the response to the client
             if node.get_successor() == []:
                 return jsonify({"message": f"Inserted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
+            
             else:
                 try: 
-                    packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": k-1} 
+                    packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": to_send-1} 
                     response = requests.post(f"http://{node.get_successor()[0]}:{node.get_successor()[1]}/chain_replicated_insert",json=packet)
                     response.raise_for_status()
                     return response.json(), response.status_code
@@ -83,7 +99,7 @@ def insert_song(song_name: str, value: int = 0):
             if node.get_successor() == []:
                 return jsonify({"message": f"Inserted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
             else:
-                packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": k-1} # prepare the packet that is the argument of the thread
+                packet = {"song_name": song_name, "value": node.get_song_list()[song_name], "k": to_send-1} # prepare the packet that is the argument of the thread
                 thread = threading.Thread(target=eventual_insertion_background, args=(packet,)) # our argument is the function that we want to run in the thread, so from the function we hit the endpoint
                 thread.start() # start the thread to replicate the song to the next k-1 nodes
                 return jsonify({"message": f"Inserted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
@@ -212,6 +228,7 @@ def chain_replicated_insert():
         except requests.RequestException as e:
             return jsonify({"error": f"Failed to forward chain replication packet to node {successor}: {str(e)}"}), 500
     
+
 
 @app.route('/query/<string:song_name>', methods=['GET'])
 def query_song(song_name: str):
@@ -380,7 +397,7 @@ def chain_replicated_query():
         print(f"Last Node that the song query happens {node.get_ip()}:{node.get_port()}")
         result = node.query(song_name)
         if result is None:
-            return jsonify({"message": f"Song '{song_name}' not found in DHT"}), 404
+            return jsonify({"message": f"Song '{song_name}' not found in DHT"}), 200
         return jsonify({
             "message": f"Song found at tail node -> {node.get_ip()}:{node.get_port()}",
             "value": result
@@ -389,7 +406,7 @@ def chain_replicated_query():
     else:
         successor = node.get_successor()
         if not successor or successor == []:
-            return jsonify({"message": f"Song '{song_name}' not found in DHT"}), 404
+            return jsonify({"message": f"Song '{song_name}' not found in DHT"}), 200
          
         # Otherwise, forward the query further along the chain.
         chain_query_url = f"http://{successor[0]}:{successor[1]}/chain_replicated_query?song_name={song_name}&k={counter-1}"
@@ -404,7 +421,6 @@ def chain_replicated_query():
                 return response.json(), 404
             
             return jsonify({"error": f"Failed to forward chain replicated query to node {successor}: {str(e)}"}), 500
-
 
 
 @app.route('/delete/<string:song_name>', methods=['DELETE'])
@@ -428,6 +444,20 @@ def delete(song_name: str):
     
     if belongs_to_me(key, current_id ,pred):
         result = node.delete(song_name)
+        
+        network_nodes = 0
+        try:
+            request = requests.get(f"http://{os.getenv('BOOTSTRAP_IP')}:{os.getenv('BOOTSTRAP_PORT')}/get_nodes")
+            network_nodes = request.json().get("number_of_nodes", 1)
+        except requests.RequestException as e:
+            return jsonify({"error": f"Failed to get number of nodes from bootstrap node: {str(e)}"}), 500
+        
+        to_send = k
+        if network_nodes <= k:
+            print('Under-replication detected\n')
+            to_send = network_nodes
+            
+        
         if result == True:
             if consistency == "chain replication":
                 print(f"Consistency Model: {consistency} and we start from the primary node of the key {node.get_ip()}:{node.get_port()}")
@@ -436,7 +466,7 @@ def delete(song_name: str):
                     return jsonify({"message": f"Deleted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
                 else:
                     try: 
-                        packet = {"song_name": song_name, "k": k-1}
+                        packet = {"song_name": song_name, "k": to_send-1}
                         response = requests.post(f"http://{node.get_successor()[0]}:{node.get_successor()[1]}/chain_replicated_delete",json=packet)
                         response.raise_for_status()
                         return response.json(), response.status_code
@@ -448,7 +478,7 @@ def delete(song_name: str):
                 # The First Node in the chain has to return the response to the client and then return the response to the client, meanwhile a thread has been opened to replicate the song to the next k-1 nodes
                 if node.get_successor() == []:
                     return jsonify({"message": f"Deleted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
-                packet = {"song_name": song_name , "k": k-1}  # prepare the packet that is the argument of the thread
+                packet = {"song_name": song_name , "k": to_send-1}  # prepare the packet that is the argument of the thread
                 thread = threading.Thread(target=eventual_deletion_background, args=(packet,)) # our argument is the function that we want to run in the thread, so from the function we hit the endpoint
                 thread.start() # start the thread to replicate the song to the next k-1 nodes
                 return jsonify({"message": f"Deleted '{song_name}' at node {node.get_ip()} and port {node.get_port()}"}), 200
