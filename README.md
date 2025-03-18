@@ -65,16 +65,16 @@ pip install -r requirements.txt
 
  ```bash
 python bootstrap.py 5000
-\`\`\`
+```
 
-3. Start additional nodes:
+2. Start additional nodes:
 ```bash
 python regular_node.py 5001
 python regular_node.py 5002
 # ... and so on
 ```
 
-2. Have each node join the DHT:
+3. Have each node join the DHT:
 ```bash
 curl -X POST http://localhost:5001/join
 curl -X POST http://localhost:5002/join
@@ -141,7 +141,7 @@ python second_experiment.py  # For query throughput comparison
 
 ## Configuration
 
-Edit [\`utils.py\`](utils.py ) to change system parameters:
+Edit [`utils.py`](utils.py ) to change system parameters:
 
 ```python
 k = 2  # Replication factor
