@@ -113,12 +113,12 @@ DHT> overlay
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| \`/insert/<key>/<value>\` | POST | Insert a key-value pair |
-| \`/query/<key>\` | GET | Get value of a key |
-| \`/delete/<key>\` | DELETE | Remove a key-value pair |
-| \`/join\` | POST | Join the DHT network |
-| \`/depart\` | POST | Gracefully leave the DHT |
-| \`/overlay\` | GET | Get the current node topology |
+| `/insert/<key>/<value>` | POST | Insert a key-value pair |
+| `/query/<key>` | GET | Get value of a key |
+| `/delete/<key>` | DELETE | Remove a key-value pair |
+| `/join` | POST | Join the DHT network |
+| `/depart` | POST | Gracefully leave the DHT |
+| `/overlay` | GET | Get the current node topology |
 
 ## Running Experiments
 
