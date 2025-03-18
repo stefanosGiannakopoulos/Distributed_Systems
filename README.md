@@ -44,7 +44,7 @@ This project implements a Distributed Hash Table (DHT) system that stores and re
 
 ## Installation
 
-\`\`\`bash
+```bash
 # Clone the repository
 git clone <repository-url>
 cd <repository-directory>
@@ -55,41 +55,42 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-\`\`\`
+```
 
 ## Usage
 
 ### Starting a DHT Network
 
 1. Start the bootstrap node:
-\`\`\`bash
+
+ ```bash
 python bootstrap.py 5000
 \`\`\`
 
-2. Start additional nodes:
-\`\`\`bash
+3. Start additional nodes:
+```bash
 python regular_node.py 5001
 python regular_node.py 5002
 # ... and so on
-\`\`\`
+```
 
-3. Have each node join the DHT:
-\`\`\`bash
+2. Have each node join the DHT:
+```bash
 curl -X POST http://localhost:5001/join
 curl -X POST http://localhost:5002/join
 # ... and so on
-\`\`\`
+```
 
 ### Using the CLI
 
 The CLI provides an interactive way to interact with the DHT:
 
-\`\`\`bash
+```bash
 python cli.py
-\`\`\`
+```
 
 Example commands:
-\`\`\`
+```
 DHT> setnode 3
 Target node set to: http://10.0.17.158:5002
 
@@ -104,7 +105,7 @@ DHT> delete "Like a Rolling Stone"
   
 DHT> overlay
 {"overlay": ["10.0.17.96:5000", "10.0.17.245:5001", "10.0.17.158:5002", "10.0.17.171:5003", "10.0.17.209:5004", "..."]}
-\`\`\`
+```
 
 ## API Reference
 
@@ -123,7 +124,7 @@ DHT> overlay
 
 The project includes several scripts for performance evaluation:
 
-\`\`\`bash
+```bash
 # Insert throughput experiment
 python insert_experiment.py
 
@@ -136,16 +137,16 @@ python request_experiment.py
 # Visualize results
 python first_experiment.py  # For insert throughput comparison
 python second_experiment.py  # For query throughput comparison
-\`\`\`
+```
 
 ## Configuration
 
 Edit [\`utils.py\`](utils.py ) to change system parameters:
 
-\`\`\`python
+```python
 k = 2  # Replication factor
 consistency = "chain replication"  # Options: "chain replication" or "eventual consistency"
-\`\`\`
+```
 
 ## Performance Results
 
