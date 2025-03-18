@@ -154,7 +154,3 @@ The system demonstrates different performance characteristics depending on the c
 - **Chain Replication**: Provides strong consistency but with lower throughput as k increases
 - **Eventual Consistency**: Provides higher throughput that actually improves with increased replication factor
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-EOF
