@@ -94,11 +94,11 @@ Example commands:
 DHT> setnode 3
 Target node set to: http://10.0.17.158:5002
 
-DHT> insert "Like a Rolling Stone" "http://download.nodeX"
+DHT> insert "Like a Rolling Stone" 100
 {"message": "Inserted 'Like a Rolling Stone' at node 10.0.17.158:5002"}
   
 DHT> query "Like a Rolling Stone"
-{"message": "Song found at node 10.0.17.158:5002", "value": "http://download.nodeX"}
+{"message": "Song found at node 10.0.17.158:5002", "value": 100}
   
 DHT> delete "Like a Rolling Stone"
 {"message": "Deleted 'Like a Rolling Stone' from node 10.0.17.158:5002"}
